@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Skills | TalentExchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <h1 class="text-4xl font-bold mb-lg">Search Skills</h1>
+
+            <!-- Search Filters -->
+            <div class="card mb-lg">
+                <div class="grid grid-cols-3 gap-md">
+                    <div>
+                        <label class="form-label">Search by skill</label>
+                        <input type="text" id="searchInput" class="input"
+                            placeholder="Eg: Graphic design, yoga, programming...">
+                    </div>
+                    <div>
+                        <label class="form-label">Category</label>
+                        <select id="categoryFilter" class="input">
+                            <option value="">All categories</option>
+                            <option value="Diseño">Design</option>
+                            <option value="Tecnología">Technology</option>
+                            <option value="Idiomas">Languages</option>
+                            <option value="Arte">Art</option>
+                            <option value="Música">Music</option>
+                            <option value="Bienestar">Wellness</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Escritura">Writing</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Minimum rating</label>
+                        <select id="ratingFilter" class="input">
+                            <option value="0">Any</option>
+                            <option value="4">4+ stars</option>
+                            <option value="4.5">4.5+ stars</option>
+                            <option value="4.8">4.8+ stars</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="performSearch()" class="btn btn-primary mt-md">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Search
+                </button>
+            </div>
+
+            <!-- Results -->
+            <div id="resultsContainer">
+                <h2 class="text-2xl font-bold mb-md">Search Results</h2>
+                <div id="resultsGrid" class="grid grid-cols-3 gap-lg">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/navigation.js"></script>
+
+    <script>
+        requireAuth();
+        const currentUser = getCurrentUser();
+        document.getElementById('sidebarContainer').innerHTML = generateSidebar();
+        setActiveNavItem();
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const minRating = parseFloat(document.getElementById('ratingFilter').value);
+
+            let results = USERS.filter(user => user.id !== currentUser.id);
+
+            if (searchTerm) {
+                results = results.filter(user =>
+                    user.skills.some(skill => skill.toLowerCase().includes(searchTerm)) ||
+                    user.name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (category) {
+                results = results.filter(user => {
+                    const categorySkills = SKILL_CATEGORIES[category] || [];
+                    return user.skills.some(skill => categorySkills.includes(skill));
+                });
+            }
+
+            if (minRating > 0) {
+                results = results.filter(user => user.rating >= minRating);
+            }
+
+            displayResults(results);
+        }
+
+        function displayResults(users) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+
+                if (users.length === 0) {
+                grid.innerHTML = '<p class="col-span-3 text-center text-gray-500 dark:text-gray-400 py-12">No results found</p>';
+                return;
+            }
+
+            users.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'card fade-in';
+                card.innerHTML = `
+                    <div class="text-center">
+                        <img src="${user.avatar}" alt="${user.name}" class="avatar-xl mx-auto mb-md">
+                        <h3 class="text-xl font-bold mb-sm">${user.name}</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-md">${user.location}</p>
+                        ${generateStars(user.rating)}
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-md mb-md">${truncateText(user.bio, 100)}</p>
+                        <div class="flex flex-wrap gap-sm justify-center mb-md">
+                            ${user.skills.slice(0, 3).map(skill => `<span class="badge badge-primary">${skill}</span>`).join('')}
+                            ${user.skills.length > 3 ? `<span class="badge badge-secondary">+${user.skills.length - 3}</span>` : ''}
+                        </div>
+                        <div class="flex gap-sm">
+                            <a href="profile.html?id=${user.id}" class="btn btn-outline flex-1">View Profile</a>
+                            <a href="chat.html?user=${user.id}" class="btn btn-primary flex-1">Contact</a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Initial load - show all users
+        performSearch();
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    </script>
+</body>
+
+</html>

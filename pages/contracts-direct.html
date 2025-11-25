@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Contracts | TalentExchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <h1 class="text-4xl font-bold mb-lg">Direct Contracts</h1>
+
+            <!-- Search Filters -->
+            <div class="card mb-lg">
+                <div class="grid grid-cols-3 gap-md">
+                    <div>
+                        <label class="form-label">Search contract</label>
+                        <input type="text" id="searchInput" class="input"
+                            placeholder="Search by user or skill...">
+                    </div>
+                    <div>
+                        <label class="form-label">Status</label>
+                        <select id="statusFilter" class="input">
+                            <option value="">All statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="pending">Pending</option>
+                            <option value="proposed">Proposed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Type</label>
+                        <select id="typeFilter" class="input">
+                            <option value="">All</option>
+                            <option value="sent">Sent</option>
+                            <option value="received">Received</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="performSearch()" class="btn btn-primary mt-md">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Search
+                </button>
+            </div>
+
+            <!-- Results -->
+            <div id="resultsContainer">
+                <h2 class="text-2xl font-bold mb-md">My Contracts</h2>
+                <div id="resultsGrid" class="grid grid-cols-2 gap-lg">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/navigation.js"></script>
+
+    <script>
+        requireAuth();
+        const currentUser = getCurrentUser();
+        document.getElementById('sidebarContainer').innerHTML = generateSidebar();
+        setActiveNavItem();
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const type = document.getElementById('typeFilter').value;
+
+            let results = DIRECT_CONTRACTS.filter(c =>
+                c.userA.id === currentUser.id || c.userB.id === currentUser.id
+            );
+
+            if (searchTerm) {
+                results = results.filter(contract =>
+                    contract.userA.name.toLowerCase().includes(searchTerm) ||
+                    contract.userB.name.toLowerCase().includes(searchTerm) ||
+                    contract.userA.skill.toLowerCase().includes(searchTerm) ||
+                    contract.userB.skill.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (status) {
+                results = results.filter(contract => contract.status === status);
+            }
+
+            if (type === 'sent') {
+                results = results.filter(contract => contract.userA.id === currentUser.id);
+            } else if (type === 'received') {
+                results = results.filter(contract => contract.userB.id === currentUser.id);
+            }
+
+            displayResults(results);
+        }
+
+        function displayResults(contracts) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+
+                if (contracts.length === 0) {
+                grid.innerHTML = '<p class="col-span-2 text-center text-gray-500 dark:text-gray-400 py-12">No contracts found</p>';
+                return;
+            }
+
+            contracts.forEach(contract => {
+                const isUserA = contract.userA.id === currentUser.id;
+                const otherUser = isUserA ? contract.userB : contract.userA;
+                const mySkill = isUserA ? contract.userA.skill : contract.userB.skill;
+                const theirSkill = isUserA ? contract.userB.skill : contract.userA.skill;
+
+                const card = document.createElement('div');
+                card.className = 'card fade-in';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-md">
+                        <div>
+                            <h3 class="text-xl font-bold mb-sm">Exchange with ${otherUser.name}</h3>
+                            ${getStatusBadge(contract.status)}
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-md mb-md p-md bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-sm">You offer:</p>
+                            <p class="font-semibold text-primary-red">${mySkill}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-sm">You receive:</p>
+                            <p class="font-semibold text-secondary-teal">${theirSkill}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-md">${contract.description}</p>
+                    
+                    <div class="flex items-center gap-md text-sm text-gray-600 dark:text-gray-400 mb-md">
+                        <span>📅 Date: ${formatDate(contract.scheduledDate)}</span>
+                        <span>📝 Created: ${formatRelativeDate(contract.createdDate)}</span>
+                    </div>
+
+                    <div class="flex gap-sm">
+                        ${contract.status === 'proposed' && !isUserA ? `
+                            <button onclick="acceptContract(${contract.id})" class="btn btn-primary flex-1">Accept</button>
+                            <button onclick="rejectContract(${contract.id})" class="btn btn-outline flex-1">Reject</button>
+                        ` : ''}
+                        ${contract.status === 'in_progress' ? `
+                            <button onclick="completeContract(${contract.id})" class="btn btn-primary flex-1">Mark Completed</button>
+                        ` : ''}
+                        <a href="chat.html?user=${otherUser.id}" class="btn btn-secondary flex-1">Message</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function acceptContract(id) {
+            const contract = DIRECT_CONTRACTS.find(c => c.id === id);
+            if (contract) {
+                contract.status = 'in_progress';
+                performSearch();
+                showToast('Contrato aceptado', 'success');
+            }
+        }
+
+        function rejectContract(id) {
+            showToast('Contrato rechazado', 'info');
+            performSearch();
+        }
+
+        function completeContract(id) {
+            const contract = DIRECT_CONTRACTS.find(c => c.id === id);
+            if (contract) {
+                contract.status = 'completed';
+                contract.completedDate = new Date().toISOString().split('T')[0];
+                performSearch();
+                showToast('¡Contrato completado!', 'success');
+            }
+        }
+
+        // Initial load
+        performSearch();
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Auto-search on filter change
+        document.getElementById('statusFilter').addEventListener('change', performSearch);
+        document.getElementById('typeFilter').addEventListener('change', performSearch);
+    </script>
+</body>
+
+</html>

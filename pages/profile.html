@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | TalentExchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="grid grid-cols-3 gap-lg">
+                <!-- Left Column - Profile Info -->
+                <div>
+                    <div class="card text-center">
+                        <img id="profileAvatar" src="" alt="Avatar" class="avatar-xl mx-auto mb-md">
+                        <h2 id="profileName" class="text-2xl font-bold mb-sm"></h2>
+                        <p id="profileLocation" class="text-gray-600 dark:text-gray-400 mb-md"></p>
+                        <div id="profileRating" class="mb-md"></div>
+                        <div class="flex gap-sm justify-center mb-md">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold" id="profileExchanges">0</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Exchanges</p>
+                            </div>
+                            <div class="w-px bg-gray-300 dark:bg-gray-600"></div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold" id="profileJoinDate"></p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Member since</p>
+                            </div>
+                        </div>
+                        <div id="profileActions" class="space-y-sm">
+                            <!-- Actions will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="card mt-lg">
+                        <h3 class="text-xl font-bold mb-md">Skills</h3>
+                        <div id="profileSkills" class="flex flex-wrap gap-sm">
+                            <!-- Skills will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Seeking -->
+                    <div class="card mt-lg">
+                        <h3 class="text-xl font-bold mb-md">Seeking</h3>
+                        <div id="profileSeeking" class="flex flex-wrap gap-sm">
+                            <!-- Seeking will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Bio & Reviews -->
+                <div class="col-span-2">
+                    <!-- Bio -->
+                    <div class="card mb-lg">
+                        <h3 class="text-xl font-bold mb-md">About me</h3>
+                        <p id="profileBio" class="text-gray-600 dark:text-gray-400"></p>
+                    </div>
+
+                    <!-- Reviews -->
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-md">Reviews & Feedback</h3>
+                        <div id="profileReviews" class="space-y-4">
+                            <!-- Reviews will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/navigation.js"></script>
+
+    <script>
+        requireAuth();
+        const currentUser = getCurrentUser();
+        document.getElementById('sidebarContainer').innerHTML = generateSidebar();
+        setActiveNavItem();
+
+        // Get user ID from URL or use current user
+        const params = getURLParams();
+        const userId = params.id ? parseInt(params.id) : currentUser.id;
+        const profileUser = USERS.find(u => u.id === userId) || currentUser;
+        const isOwnProfile = profileUser.id === currentUser.id;
+
+        // Populate profile
+        document.getElementById('profileAvatar').src = profileUser.avatar;
+        document.getElementById('profileName').textContent = profileUser.name;
+        document.getElementById('profileLocation').textContent = profileUser.location;
+        document.getElementById('profileRating').innerHTML = generateStars(profileUser.rating);
+        document.getElementById('profileExchanges').textContent = profileUser.completedExchanges;
+        document.getElementById('profileJoinDate').textContent = new Date(profileUser.joinDate).getFullYear();
+        document.getElementById('profileBio').textContent = profileUser.bio || 'This user has not added a bio yet.';
+
+        // Profile actions
+        const actionsContainer = document.getElementById('profileActions');
+        if (isOwnProfile) {
+                actionsContainer.innerHTML = `
+                <button onclick="showToast('Edit profile coming soon', 'info')" class="btn btn-primary w-full">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit Profile
+                </button>
+            `;
+        } else {
+            actionsContainer.innerHTML = `
+                <a href="chat.html?user=${profileUser.id}" class="btn btn-primary w-full">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    Send Message
+                </a>
+                <button onclick="showToast('Proponer intercambio próximamente', 'info')" class="btn btn-secondary w-full">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                    Propose Exchange
+                </button>
+            `;
+        }
+
+        // Skills
+        const skillsContainer = document.getElementById('profileSkills');
+        profileUser.skills.forEach(skill => {
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-primary';
+            badge.textContent = skill;
+            skillsContainer.appendChild(badge);
+        });
+
+        // Seeking
+        const seekingContainer = document.getElementById('profileSeeking');
+        profileUser.seeking.forEach(skill => {
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-secondary';
+            badge.textContent = skill;
+            seekingContainer.appendChild(badge);
+        });
+
+        // Reviews
+        const reviewsContainer = document.getElementById('profileReviews');
+        const userReviews = REVIEWS.filter(r => r.userId === profileUser.id);
+
+        if (userReviews.length === 0) {
+            reviewsContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No reviews yet</p>';
+        } else {
+            userReviews.forEach(review => {
+                const reviewEl = document.createElement('div');
+                reviewEl.className = 'p-md bg-gray-50 dark:bg-gray-700 rounded-lg';
+                reviewEl.innerHTML = `
+                    <div class="flex items-start justify-between mb-sm">
+                        <div>
+                            <p class="font-semibold">${review.reviewerName}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${formatRelativeDate(review.date)}</p>
+                        </div>
+                        ${generateStars(review.rating)}
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-sm">${review.comment}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">Intercambio: ${review.exchangeType}</p>
+                `;
+                reviewsContainer.appendChild(reviewEl);
+            });
+        }
+    </script>
+</body>
+
+</html>

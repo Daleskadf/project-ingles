@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | TalentExchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Sidebar Navigation -->
+    <div id="sidebarContainer"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-xl">
+                <div>
+                    <h1 class="text-4xl font-bold">Dashboard</h1>
+                    <p class="text-gray-600 dark:text-gray-400 mt-sm">Welcome back, <span id="userName"></span>
+                    </p>
+                </div>
+                <a href="pages/job-board.html" class="btn btn-primary">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Post Job
+                </a>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-4 gap-lg mb-xl">
+                <div class="card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Completed Exchanges</p>
+                            <p class="text-3xl font-bold mt-sm" id="completedExchanges">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-success/20 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Active Contracts</p>
+                            <p class="text-3xl font-bold mt-sm" id="activeContracts">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-warning/20 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Rating</p>
+                            <p class="text-3xl font-bold mt-sm" id="userRating">0.0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-tag-yellow/20 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-tag-yellow" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">New Messages</p>
+                            <p class="text-3xl font-bold mt-sm" id="newMessages">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-info/20 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-3 gap-lg">
+                <!-- Left Column - Contracts & Events -->
+                <div class="col-span-2">
+                    <!-- Active Contracts -->
+                    <div class="card mb-lg">
+                        <div class="flex justify-between items-center mb-lg">
+                            <h2 class="text-2xl font-bold">Active Contracts</h2>
+                            <a href="pages/contracts-direct.html" class="text-secondary-teal hover:underline">View
+                                all</a>
+                        </div>
+                        <div id="contractsList" class="space-y-4">
+                            <!-- Contracts will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Events -->
+                    <div class="card">
+                        <div class="flex justify-between items-center mb-lg">
+                            <h2 class="text-2xl font-bold">Upcoming Events</h2>
+                            <a href="pages/calendar.html" class="text-secondary-teal hover:underline">View calendar</a>
+                        </div>
+                        <div id="eventsList" class="space-y-4">
+                            <!-- Events will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Quick Actions & Recent Activity -->
+                <div>
+                    <!-- Quick Actions -->
+                    <div class="card mb-lg">
+                        <h3 class="text-xl font-bold mb-md">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <a href="pages/search.html" class="btn btn-secondary w-full">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                Search Skills
+                            </a>
+                            <a href="pages/job-board.html" class="btn btn-outline w-full">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                    </path>
+                                </svg>
+                                View Board
+                            </a>
+                            <a href="pages/chat.html" class="btn btn-outline w-full">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                    </path>
+                                </svg>
+                                Messages
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-md">My Skills</h3>
+                        <div id="skillsList" class="flex flex-wrap gap-sm">
+                            <!-- Skills will be loaded here -->
+                        </div>
+                        <a href="pages/profile.html"
+                            class="text-secondary-teal hover:underline text-sm mt-md inline-block">Edit profile</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/navigation.js"></script>
+
+    <script>
+        // Load user data
+        const currentUser = getCurrentUser();
+
+        if (!currentUser) {
+            window.location.href = 'pages/login.html';
+        } else {
+            // Populate user info
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('completedExchanges').textContent = currentUser.completedExchanges;
+            document.getElementById('userRating').textContent = currentUser.rating.toFixed(1);
+
+            // Calculate active contracts
+            const activeContracts = DIRECT_CONTRACTS.filter(c =>
+                (c.userA.id === currentUser.id || c.userB.id === currentUser.id) &&
+                (c.status === 'in_progress' || c.status === 'pending')
+            ).length;
+            document.getElementById('activeContracts').textContent = activeContracts;
+
+            // Calculate new messages
+            const conversations = getUserConversations(currentUser.id);
+            const unreadCount = conversations.reduce((sum, conv) => sum + conv.unread, 0);
+            document.getElementById('newMessages').textContent = unreadCount;
+
+            // Load contracts
+            const contractsContainer = document.getElementById('contractsList');
+            const userContracts = DIRECT_CONTRACTS.filter(c =>
+                (c.userA.id === currentUser.id || c.userB.id === currentUser.id) &&
+                c.status !== 'completed'
+            ).slice(0, 3);
+
+            if (userContracts.length === 0) {
+                contractsContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">You have no active contracts</p>';
+            } else {
+                userContracts.forEach(contract => {
+                    const otherUser = contract.userA.id === currentUser.id ? contract.userB : contract.userA;
+                    const mySkill = contract.userA.id === currentUser.id ? contract.userA.skill : contract.userB.skill;
+                    const theirSkill = contract.userA.id === currentUser.id ? contract.userB.skill : contract.userA.skill;
+
+                    const contractEl = document.createElement('div');
+                    contractEl.className = 'flex items-center justify-between p-md bg-gray-50 dark:bg-gray-700 rounded-lg';
+                    contractEl.innerHTML = `
+                        <div class="flex-1">
+                            <p class="font-semibold">${otherUser.name}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                You: ${mySkill} ↔ Them: ${theirSkill}
+                            </p>
+                        </div>
+                        ${getStatusBadge(contract.status)}
+                    `;
+                    contractsContainer.appendChild(contractEl);
+                });
+            }
+
+            // Load events
+            const eventsContainer = document.getElementById('eventsList');
+            const userEvents = CALENDAR_EVENTS.filter(e =>
+                e.participants.includes(currentUser.name)
+            ).slice(0, 3);
+
+            if (userEvents.length === 0) {
+                eventsContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">You have no upcoming events</p>';
+            } else {
+                userEvents.forEach(event => {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = 'flex items-start gap-md p-md bg-gray-50 dark:bg-gray-700 rounded-lg';
+                    eventEl.innerHTML = `
+                        <div class="w-12 h-12 bg-secondary-teal/20 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+                            <span class="text-xs font-semibold text-secondary-teal">${new Date(event.date).toLocaleDateString('es-ES', { month: 'short' }).toUpperCase()}</span>
+                            <span class="text-lg font-bold text-secondary-teal">${new Date(event.date).getDate()}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold truncate">${event.title}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${event.time}</p>
+                        </div>
+                        ${getStatusBadge(event.status)}
+                    `;
+                    eventsContainer.appendChild(eventEl);
+                });
+            }
+
+            // Load skills
+            const skillsContainer = document.getElementById('skillsList');
+            currentUser.skills.forEach(skill => {
+                const skillEl = document.createElement('span');
+                skillEl.className = 'badge badge-primary';
+                skillEl.textContent = skill;
+                skillsContainer.appendChild(skillEl);
+            });
+
+            // Load sidebar
+            document.getElementById('sidebarContainer').innerHTML = generateSidebar();
+            setActiveNavItem();
+        }
+    </script>
+</body>
+
+</html>

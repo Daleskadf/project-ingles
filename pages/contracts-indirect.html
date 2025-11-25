@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Chains | TalentExchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <h1 class="text-4xl font-bold mb-lg">Help Chains</h1>
+
+            <!-- Info Card -->
+            <div class="card mb-lg bg-secondary-teal/10 border-l-4 border-secondary-teal">
+                <h3 class="font-bold mb-sm">What are Help Chains?</h3>
+                <p class="text-sm">Help chains are indirect exchanges where A helps B, B helps C, and C helps A.
+                    Everyone gets what they need without a direct swap.</p>
+            </div>
+
+            <!-- Search Filters -->
+            <div class="card mb-lg">
+                <div class="grid grid-cols-3 gap-md">
+                    <div>
+                        <label class="form-label">Search chain</label>
+                        <input type="text" id="searchInput" class="input"
+                            placeholder="Search by name or skill...">
+                    </div>
+                    <div>
+                        <label class="form-label">Status</label>
+                        <select id="statusFilter" class="input">
+                            <option value="">All statuses</option>
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Participation</label>
+                        <select id="participationFilter" class="input">
+                            <option value="">All</option>
+                            <option value="participating">Participating</option>
+                            <option value="available">Available</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="performSearch()" class="btn btn-primary mt-md">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Search
+                </button>
+            </div>
+
+            <!-- Results -->
+            <div id="resultsContainer">
+                <div class="flex justify-between items-center mb-md">
+                    <h2 class="text-2xl font-bold">Available Chains</h2>
+                    <button onclick="showToast('Feature coming soon', 'info')" class="btn btn-secondary">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        New Chain
+                    </button>
+                </div>
+                <div id="resultsGrid" class="grid grid-cols-2 gap-lg">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/navigation.js"></script>
+
+    <script>
+        requireAuth();
+        const currentUser = getCurrentUser();
+        document.getElementById('sidebarContainer').innerHTML = generateSidebar();
+        setActiveNavItem();
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const participation = document.getElementById('participationFilter').value;
+
+            let results = [...INDIRECT_CONTRACTS];
+
+            // Filter by search term
+            if (searchTerm) {
+                results = results.filter(chain =>
+                    chain.name.toLowerCase().includes(searchTerm) ||
+                    chain.description.toLowerCase().includes(searchTerm) ||
+                    chain.participants.some(p =>
+                        p.name.toLowerCase().includes(searchTerm) ||
+                        p.gives.toLowerCase().includes(searchTerm) ||
+                        p.receives.toLowerCase().includes(searchTerm)
+                    )
+                );
+            }
+
+            // Filter by status
+            if (status) {
+                results = results.filter(chain => chain.status === status);
+            }
+
+            // Filter by participation
+            if (participation === 'participating') {
+                results = results.filter(chain =>
+                    chain.participants.some(p => p.id === currentUser.id)
+                );
+            } else if (participation === 'available') {
+                results = results.filter(chain =>
+                    !chain.participants.some(p => p.id === currentUser.id) &&
+                    chain.status === 'active'
+                );
+            }
+
+            displayResults(results);
+        }
+
+        function displayResults(chains) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+
+                if (chains.length === 0) {
+                grid.innerHTML = '<p class="col-span-2 text-center text-gray-500 dark:text-gray-400 py-12">No chains found</p>';
+                return;
+            }
+
+            chains.forEach(chain => {
+                const isParticipant = chain.participants.some(p => p.id === currentUser.id);
+
+                const card = document.createElement('div');
+                card.className = 'card fade-in';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-md">
+                        <div>
+                            <h3 class="text-xl font-bold mb-sm">${chain.name}</h3>
+                            ${getStatusBadge(chain.status)}
+                        </div>
+                            ${isParticipant ? '<span class="badge badge-primary">Participating</span>' : ''}
+                    </div>
+                    
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-lg">${chain.description}</p>
+                    
+                    <!-- Chain Visualization -->
+                    <div class="flex items-center justify-between mb-lg p-md bg-gray-50 dark:bg-gray-700 rounded-xl overflow-x-auto">
+                        ${chain.participants.map((participant, index) => `
+                            <div class="flex-shrink-0 text-center ${participant.id === currentUser.id ? 'bg-secondary-teal/20 rounded-lg p-sm' : 'p-sm'}">
+                                <div class="w-12 h-12 mx-auto mb-xs">
+                                    <img src="${USERS.find(u => u.id === participant.id)?.avatar || 'https://i.pravatar.cc/150'}" 
+                                         alt="${participant.name}" 
+                                         class="avatar mx-auto">
+                                </div>
+                                <p class="font-semibold text-xs mb-xs truncate" style="max-width: 80px;">${participant.name}</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-xs">Gives: ${participant.gives}</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400">Receives: ${participant.receives}</p>
+                            </div>
+                            ${index < chain.participants.length - 1 ? `
+                                <div class="flex-shrink-0 mx-sm">
+                                    <svg class="w-6 h-6 text-secondary-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    </svg>
+                                </div>
+                            ` : ''}
+                        `).join('')}
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs text-gray-600 dark:text-gray-400">
+                            <span>👥 ${chain.participants.length} participantes</span>
+                            <span class="ml-md">📅 ${chain.status === 'completed' ? 'Completada: ' + formatDate(chain.completedDate) : 'Creada: ' + formatRelativeDate(chain.createdDate)}</span>
+                        </div>
+                        ${!isParticipant && chain.status === 'active' ? `
+                            <button onclick="joinChain(${chain.id})" class="btn btn-primary btn-sm">Unirse</button>
+                        ` : ''}
+                        ${isParticipant ? `
+                            <button onclick="viewChainDetails(${chain.id})" class="btn btn-outline btn-sm">Ver Detalles</button>
+                        ` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function joinChain(id) {
+            showToast('Join chain functionality coming soon', 'info');
+        }
+
+        function viewChainDetails(id) {
+            showToast('Funcionalidad de ver detalles próximamente', 'info');
+        }
+
+        // Initial load - show all chains
+        performSearch();
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Auto-search on filter change
+        document.getElementById('statusFilter').addEventListener('change', performSearch);
+        document.getElementById('participationFilter').addEventListener('change', performSearch);
+    </script>
+</body>
+
+</html>

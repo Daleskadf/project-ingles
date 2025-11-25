@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Board | TalentExchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="flex justify-between items-center mb-lg">
+                <h1 class="text-4xl font-bold">Job Board</h1>
+                <button onclick="showPublishModal()" class="btn btn-primary">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Post Job
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-lg">
+                <div class="flex gap-md">
+                    <select id="categoryFilter" class="input flex-1" onchange="filterJobs()">
+                        <option value="">All categories</option>
+                        <option value="Diseño">Design</option>
+                        <option value="Tecnología">Technology</option>
+                        <option value="Música">Music</option>
+                        <option value="Video">Video</option>
+                        <option value="Arte">Art</option>
+                    </select>
+                    <select id="statusFilter" class="input flex-1" onchange="filterJobs()">
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="all">All</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Jobs Grid -->
+            <div id="jobsGrid" class="grid grid-cols-2 gap-lg">
+                <!-- Jobs will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Publish Job Modal -->
+    <div id="publishModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-lg">Publish New Job</h3>
+            <form id="publishForm" onsubmit="publishJob(event)">
+                <div class="form-group">
+                    <label class="form-label">Job Title</label>
+                    <input type="text" id="jobTitle" class="input" required placeholder="Eg: I need a logo design">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="jobDescription" class="input" rows="4" required
+                        placeholder="Describe what you need..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Required Skill</label>
+                    <input type="text" id="jobSkillRequired" class="input" required placeholder="Eg: Graphic Design">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Skill You Offer</label>
+                    <input type="text" id="jobSkillOffered" class="input" required placeholder="Eg: Web Development">
+                </div>
+                <div class="flex gap-md">
+                    <button type="button" onclick="closePublishModal()" class="btn btn-outline flex-1">Cancel</button>
+                    <button type="submit" class="btn btn-primary flex-1">Publish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/navigation.js"></script>
+
+    <script>
+        requireAuth();
+        const currentUser = getCurrentUser();
+        document.getElementById('sidebarContainer').innerHTML = generateSidebar();
+        setActiveNavItem();
+
+        function filterJobs() {
+            const category = document.getElementById('categoryFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            let jobs = [...JOB_BOARD];
+
+            if (category) {
+                jobs = jobs.filter(job => job.category === category);
+            }
+
+            if (status !== 'all') {
+                jobs = jobs.filter(job => job.status === status);
+            }
+
+            displayJobs(jobs);
+        }
+
+        function displayJobs(jobs) {
+            const grid = document.getElementById('jobsGrid');
+            grid.innerHTML = '';
+
+            if (jobs.length === 0) {
+                grid.innerHTML = '<p class="col-span-2 text-center text-gray-500 dark:text-gray-400 py-12">No jobs available</p>';
+                return;
+            }
+
+            jobs.forEach(job => {
+                const isOwnJob = job.userId === currentUser.id;
+                const card = document.createElement('div');
+                card.className = 'card fade-in';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-md">
+                        <div class="flex items-center gap-md">
+                            <img src="${job.userAvatar}" alt="${job.userName}" class="avatar">
+                            <div>
+                                <p class="font-semibold">${job.userName}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">${formatRelativeDate(job.postedDate)}</p>
+                            </div>
+                        </div>
+                        ${getStatusBadge(job.status)}
+                    </div>
+                    
+                    <h3 class="text-xl font-bold mb-sm">${job.title}</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-md">${truncateText(job.description, 150)}</p>
+                    
+                    <div class="grid grid-cols-2 gap-md mb-md p-md bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-xs">Requiere:</p>
+                            <p class="font-semibold text-sm text-primary-red">${job.skillRequired}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-xs">Ofrece:</p>
+                            <p class="font-semibold text-sm text-secondary-teal">${job.skillOffered}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                            👥 ${job.applicants} ${job.applicants === 1 ? 'aplicante' : 'aplicantes'}
+                        </span>
+                        ${!isOwnJob && job.status === 'open' ? `
+                            <button onclick="applyToJob(${job.id})" class="btn btn-primary btn-sm">Aplicar</button>
+                        ` : isOwnJob ? `
+                            <span class="badge badge-secondary">Tu publicación</span>
+                        ` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function applyToJob(jobId) {
+            const job = JOB_BOARD.find(j => j.id === jobId);
+            if (job) {
+                job.applicants++;
+                showToast('¡Aplicación enviada! El usuario recibirá tu mensaje.', 'success');
+                filterJobs();
+            }
+        }
+
+        function showPublishModal() {
+            document.getElementById('publishModal').classList.add('active');
+        }
+
+        function closePublishModal() {
+            document.getElementById('publishModal').classList.remove('active');
+            document.getElementById('publishForm').reset();
+        }
+
+        function publishJob(e) {
+            e.preventDefault();
+
+            const newJob = {
+                id: JOB_BOARD.length + 1,
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userAvatar: currentUser.avatar,
+                title: document.getElementById('jobTitle').value,
+                description: document.getElementById('jobDescription').value,
+                skillRequired: document.getElementById('jobSkillRequired').value,
+                skillOffered: document.getElementById('jobSkillOffered').value,
+                category: 'General',
+                postedDate: new Date().toISOString().split('T')[0],
+                applicants: 0,
+                status: 'open'
+            };
+
+            JOB_BOARD.unshift(newJob);
+            closePublishModal();
+            showToast('¡Trabajo publicado exitosamente!', 'success');
+            filterJobs();
+        }
+
+        // Initial load
+        filterJobs();
+    </script>
+</body>
+
+</html>

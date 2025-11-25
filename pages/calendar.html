@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar | TalentExchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            padding: 0.5rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dark .calendar-day {
+            border-color: #4B5563;
+        }
+
+        .calendar-day:hover {
+            background: rgba(78, 205, 196, 0.1);
+        }
+
+        .calendar-day.has-event {
+            background: rgba(78, 205, 196, 0.2);
+            border-color: var(--secondary-teal);
+        }
+
+        .calendar-day.today {
+            background: var(--secondary-teal);
+            color: white;
+            font-weight: bold;
+        }
+
+        .event-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="flex justify-between items-center mb-lg">
+                <h1 class="text-4xl font-bold">Calendar</h1>
+                <button onclick="showToast('Add availability coming soon', 'info')" class="btn btn-primary">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Agregar Disponibilidad
+                </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-lg">
+                <!-- Calendar -->
+                <div class="col-span-2 card">
+                    <div class="flex justify-between items-center mb-lg">
+                        <h2 class="text-2xl font-bold" id="currentMonth"></h2>
+                        <div class="flex gap-sm">
+                            <button onclick="changeMonth(-1)" class="btn btn-outline btn-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <button onclick="changeMonth(1)" class="btn btn-outline btn-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Days of week -->
+                    <div class="calendar-grid mb-sm">
+                        <div class="text-center font-semibold text-sm">Sun</div>
+                        <div class="text-center font-semibold text-sm">Mon</div>
+                        <div class="text-center font-semibold text-sm">Tue</div>
+                        <div class="text-center font-semibold text-sm">Wed</div>
+                        <div class="text-center font-semibold text-sm">Thu</div>
+                        <div class="text-center font-semibold text-sm">Fri</div>
+                        <div class="text-center font-semibold text-sm">Sat</div>
+                    </div>
+
+                    <!-- Calendar days -->
+                    <div id="calendarGrid" class="calendar-grid">
+                        <!-- Days will be generated here -->
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex gap-md mt-lg text-sm">
+                        <div class="flex items-center gap-sm">
+                            <span class="event-dot" style="background: var(--success);"></span>
+                            <span>Confirmed</span>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <span class="event-dot" style="background: var(--warning);"></span>
+                            <span>Pending</span>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <span class="event-dot" style="background: var(--info);"></span>
+                            <span>Available</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events List -->
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-md">Events for the Day</h3>
+                    <div id="dayEvents" class="space-y-3">
+                        <p class="text-gray-500 dark:text-gray-400 text-sm">Select a day to view events</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/navigation.js"></script>
+
+    <script>
+        requireAuth();
+        const currentUser = getCurrentUser();
+        document.getElementById('sidebarContainer').innerHTML = generateSidebar();
+        setActiveNavItem();
+
+        let currentDate = new Date();
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('currentMonth').textContent =
+                currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // Empty cells for days before month starts
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day opacity-50';
+                grid.appendChild(emptyDay);
+            }
+
+            // Days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const events = CALENDAR_EVENTS.filter(e =>
+                    e.date === dateStr && e.participants.includes(currentUser.name)
+                );
+
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+
+                if (today.getDate() === day && today.getMonth() === month && today.getFullYear() === year) {
+                    dayEl.classList.add('today');
+                }
+
+                if (events.length > 0) {
+                    dayEl.classList.add('has-event');
+                }
+
+                dayEl.innerHTML = `
+                    <div class="font-semibold mb-xs">${day}</div>
+                    <div>
+                        ${events.map(e => {
+                    const color = e.status === 'confirmed' ? 'var(--success)' :
+                        e.status === 'pending' ? 'var(--warning)' : 'var(--info)';
+                    return `<span class="event-dot" style="background: ${color};"></span>`;
+                }).join('')}
+                    </div>
+                `;
+
+                dayEl.onclick = () => showDayEvents(dateStr);
+                grid.appendChild(dayEl);
+            }
+        }
+
+        function showDayEvents(dateStr) {
+            const events = CALENDAR_EVENTS.filter(e =>
+                e.date === dateStr && e.participants.includes(currentUser.name)
+            );
+
+            const container = document.getElementById('dayEvents');
+
+                if (events.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">No events for this day</p>';
+                return;
+            }
+
+            container.innerHTML = events.map(event => `
+                <div class="p-md bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex items-start justify-between mb-sm">
+                        <p class="font-semibold">${event.title}</p>
+                        ${getStatusBadge(event.status)}
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-sm">🕐 ${event.time}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">${event.description}</p>
+                </div>
+            `).join('');
+        }
+
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        renderCalendar();
+    </script>
+</body>
+
+</html>
